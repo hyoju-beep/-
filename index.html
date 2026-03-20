@@ -9,24 +9,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* ── 편안한 뮤트톤 다크 테마 ── */
-  --bg: #2d2c2b; --surface: #383635; --surface2: #454341;
-  --border: rgba(255,255,255,0.08); --text: #e0ddd9; --muted: #96938f;
-  --left-bg: #333130; --left-bg2: #3f3d3c;
-  --accent: #bdae9d; --accent2: #d6c9bb; --accent-dark: #9c8e7e; --btn-fg: #2d2c2b;
+  /* ── 화사하고 편안한 밝은 뮤트톤 테마 ── */
+  --bg: #f5f3f0;          /* 전체 배경 (연한 웜그레이/베이지) */
+  --surface: #ffffff;     /* 카드 및 박스 배경 (순백색) */
+  --surface2: #ebe8e4;    /* 입력창 및 호버 배경 */
+  --border: rgba(0,0,0,0.06); /* 테두리 (어두운 색상의 투명도) */
+  --text: #4a4542;        /* 기본 글자색 (진한 웜그레이) */
+  --muted: #96918c;       /* 보조 글자색 (중간 웜그레이) */
+  --left-bg: #faf8f5;     /* 왼쪽 캘린더 패널 배경 */
+  --left-bg2: #eeebe6;    /* 왼쪽 패널 내 요소 배경 */
+  --accent: #b3a293;      /* 포인트 강조색 */
+  --accent2: #c4b0af;     /* 그라데이션 보조색 */
+  --accent-dark: #9c8b7c; /* 버튼 호버 등 조금 더 진한 강조색 */
+  --btn-fg: #ffffff;      /* 버튼 안쪽 텍스트 색상 (흰색) */
   
-  /* ── 카테고리 컬러 (뮤트톤) ── */
-  --c1: #c4a79d; /* checklist (체크) - 뮤트 피치 */
-  --c2: #9eb0a2; /* study (공부) - 뮤트 세이지 */
-  --c3: #9eabb8; /* health (운동) - 뮤트 블루그레이 */
-  --c4: #b3a6b8; /* daily (일상) - 뮤트 라벤더 */
-  --c5: #c2b69f; /* job (취준) - 뮤트 샌드 */
-  --c6: #bd8a8e; /* culture (문생) - 뮤트 로즈 */
+  /* ── 카테고리 컬러 (밝은 배경에 어울리게 살짝 조정된 뮤트톤) ── */
+  --c1: #d69f8d; /* checklist (체크) - 뮤트 피치 */
+  --c2: #92b099; /* study (공부) - 뮤트 세이지 */
+  --c3: #8a9eb3; /* health (운동) - 뮤트 블루그레이 */
+  --c4: #b099b8; /* daily (일상) - 뮤트 라벤더 */
+  --c5: #c2ac7e; /* job (취준) - 뮤트 샌드 */
+  --c6: #c4838b; /* culture (문생) - 뮤트 로즈 */
 }
-
-/* 기존 테마들도 원하신다면 뮤트톤으로 덮어쓰거나 삭제하실 수 있습니다 */
-html[data-theme="purple"]{--bg:#292630;--surface:#332f3b;--surface2:#403c4a;--border:rgba(255,255,255,0.07);--text:#e0dce6;--muted:#938d9c;--left-bg:#2d2936;--left-bg2:#383342;--accent:#a392b8;--accent2:#bfaecf;--accent-dark:#8c7a9e;--btn-fg:#292630;}
-
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;}
 
