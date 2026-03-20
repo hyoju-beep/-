@@ -29,7 +29,7 @@
   --c3: #8a9eb3; /* health (운동) - 뮤트 블루그레이 */
   --c4: #b099b8; /* daily (일상) - 뮤트 라벤더 */
   --c5: #c2ac7e; /* job (취준) - 뮤트 샌드 */
-  --c6: #c4838b; /* culture (문생) - 뮤트 로즈 */
+  --c6: #c4838b; /* culture (문생) - 뮤트톤 */
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;}
@@ -1009,6 +1009,78 @@ try{
 }catch(e){}
 updateDate();load();injectRecurring();
 renderToday();renderRecurring();renderCalendar();
+</script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database-compat.js"></script>
+
+<script>
+  // 1. 파이어베이스 접속 정보 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyAIKXYOH5feNYxwO0MxHp7XW4LYFKZyg8E",
+    authDomain: "my-todo-life.firebaseapp.com",
+    databaseURL: "https://my-todo-life-default-rtdb.firebaseio.com",
+    projectId: "my-todo-life",
+    storageBucket: "my-todo-life.firebasestorage.app",
+    messagingSenderId: "903979800993",
+    appId: "1:903979800993:web:ee51ae01a190e4dfe113e0"
+  };
+
+  // 파이어베이스 초기화
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // 2. 기존 로컬 저장(save) 함수 가로채기 -> 파이어베이스에 저장하도록 덮어쓰기
+  window.save = function() {
+    try {
+      // 클라우드에 실시간 저장
+      db.ref('myAppData').set({
+        todos: todos || [],
+        recurring: recurring || [],
+        deadlines: deadlines || [],
+        events: events || [],
+        injected: [...(injected || [])]
+      });
+      
+      // 만약을 대비해 내 기기(오프라인)에도 백업 저장 유지
+      localStorage.setItem(SK_TODOS, JSON.stringify(todos));
+      localStorage.setItem(SK_RECUR, JSON.stringify(recurring));
+      localStorage.setItem(SK_DL, JSON.stringify(deadlines));
+      localStorage.setItem(SK_EV, JSON.stringify(events));
+      localStorage.setItem(SK_INJ, JSON.stringify([...injected]));
+    } catch(e) {
+      console.error("저장 중 오류 발생:", e);
+    }
+  };
+
+  // 3. 파이어베이스에서 실시간으로 데이터 받아와서 화면에 그리기
+  let isFirstLoad = true;
+  db.ref('myAppData').on('value', (snapshot) => {
+    const data = snapshot.val();
+    
+    if (data) {
+      // 클라우드에 데이터가 있으면 내 화면에 덮어씌우기
+      todos = data.todos || [];
+      recurring = data.recurring || [];
+      deadlines = data.deadlines || [];
+      events = data.events || [];
+      injected = new Set(data.injected || []);
+
+      // 바뀐 데이터로 화면 새로고침 (기존 함수들 호출)
+      if(typeof renderToday === 'function') renderToday();
+      if(typeof renderCalendar === 'function') renderCalendar();
+      if(typeof renderUpcomingStrip === 'function') renderUpcomingStrip();
+      if(typeof renderRecurring === 'function') renderRecurring();
+      if(typeof renderWeekStrip === 'function') renderWeekStrip();
+      if(typeof updateDate === 'function') updateDate();
+    } else if (isFirstLoad) {
+      // 만약 파이어베이스가 완전히 비어있는데(처음 세팅) 내 컴퓨터에는 데이터가 있다면?
+      // -> 내 컴퓨터의 데이터를 파이어베이스로 밀어넣어 초기 백업을 진행합니다.
+      console.log("파이어베이스 초기화 완료! 기존 기기 데이터를 클라우드로 업로드합니다.");
+      window.save(); 
+    }
+    
+    isFirstLoad = false;
+  });
 </script>
 </body>
 </html>
