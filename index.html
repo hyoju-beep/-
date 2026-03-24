@@ -377,7 +377,8 @@ input[type=color].cp{width:26px;height:26px;border-radius:5px;border:none;paddin
 
     <div class="add-box">
       <div class="add-row">
-        <input class="add-input" id="todoInput" type="text" placeholder="오늘 할 일 입력 ✏️" maxlength="80"/>
+       <input class="add-input" id="todoInput" type="text" placeholder="할 일 입력 ✏️" maxlength="80"/>
+<input class="date-input" id="todoDate" type="date" title="날짜 지정" style="width: 130px; margin-right: 5px;" />
         <select class="sel" id="todoCat">
           <option value="checklist">✅ 체크</option><option value="study">📚 공부</option>
           <option value="health">🏃 운동</option><option value="daily">🌿 일상</option>
@@ -643,26 +644,75 @@ function tiHTML(t){
 function addTodo(){
   const inp=document.getElementById('todoInput'),text=inp.value.trim();
   if(!text){inp.focus();return;}
+  
+  // 🌟 달력에서 선택한 날짜 가져오기 (안 골랐으면 오늘 날짜 getTK())
+  const dateInput = document.getElementById('todoDate');
+  const targetDate = (dateInput && dateInput.value) ? dateInput.value : getTK();
+
   const maxOrder=todos.reduce((m,t)=>Math.max(m,t.order||0),0);
-  todos.push({id:uid(),text,cat:document.getElementById('todoCat').value,done:false,date:getTK(),
-    priority:Number(document.getElementById('todoPri').value),memo:'',order:maxOrder+1});
-  save();renderToday();inp.value='';inp.focus();
+  todos.push({
+    id:uid(),
+    text:text,
+    cat:document.getElementById('todoCat').value,
+    done:false,
+    date:targetDate, // 👈 무조건 오늘이 아니라 선택한 날짜로 저장!
+    priority:Number(document.getElementById('todoPri').value),
+    memo:'',
+    order:maxOrder+1
+  });
+  
+  save();
+
+  // 날짜에 맞춰 화면 및 퍼센트 새로고침
+  if(targetDate === getTK()){ renderToday(); } 
+  else { if(typeof renderCalendar === 'function') renderCalendar(); }
+  if(typeof updateProgress === 'function') updateProgress();
+  if(typeof renderWeekStrip === 'function') renderWeekStrip();
+
+  inp.value='';
+  if(dateInput) dateInput.value=''; 
+  inp.focus();
 }
+
 function toggleTodo(id){
   const t=todos.find(t=>t.id===id);if(!t)return;
-  t.done=!t.done;save();renderToday();
-  if(t.done){const day=todos.filter(t=>t.date===getTK());day.length&&day.every(t=>t.done)?bigConfetti():smallConfetti();}
+  t.done=!t.done;
+  save();
+  renderToday();
+  
+  // 🌟 체크할 때마다 퍼센트와 달력도 즉시 새로고침 되도록 추가!
+  if(typeof updateProgress === 'function') updateProgress();
+  if(typeof renderCalendar === 'function') renderCalendar();
+  if(typeof renderWeekStrip === 'function') renderWeekStrip();
+
+  if(t.done){
+    const day=todos.filter(x=>x.date===getTK());
+    day.length&&day.every(x=>x.done)?bigConfetti():smallConfetti();
+  }
 }
-function deleteTodo(id){todos=todos.filter(t=>t.id!==id);save();renderToday();}
+
+function deleteTodo(id){
+  todos=todos.filter(t=>t.id!==id);
+  save();
+  renderToday();
+  
+  // 🌟 삭제할 때마다 퍼센트와 달력도 즉시 새로고침 되도록 추가!
+  if(typeof updateProgress === 'function') updateProgress();
+  if(typeof renderCalendar === 'function') renderCalendar();
+  if(typeof renderWeekStrip === 'function') renderWeekStrip();
+}
+
 function cyclePriority(id){
   const t=todos.find(t=>t.id===id);if(!t)return;
   t.priority=t.priority===1?2:t.priority===2?3:1;
   save();renderToday();
 }
+
 function toggleMemo(id){
   const el=document.getElementById(`memo-${id}`);
   if(el)el.classList.toggle('open');
 }
+
 function saveMemo(id){
   const t=todos.find(t=>t.id===id);if(!t)return;
   t.memo=document.getElementById(`memoTA-${id}`)?.value||'';
