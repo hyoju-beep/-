@@ -508,7 +508,7 @@ function updateDate(){
   document.getElementById('dateStr').textContent=`${d.getFullYear()}년 ${MONTHS[d.getMonth()]} ${d.getDate()}일`;
 }
 
-// ── 주간 리뷰 ──
+  // ── 주간 리뷰 ──
 function renderWeekStrip(){
   const today=new Date();today.setHours(0,0,0,0);
   const dow=today.getDay(); // 0=일
@@ -528,9 +528,11 @@ function renderWeekStrip(){
     const barH=total?(Math.max(4,pct*0.36)):0; // max 36px
     const bc=pct===100?'#34d399':pct>=50?'var(--accent)':'#fb923c';
     const label=['월','화','수','목','금','토','일'][weekDays.indexOf(d)];
-    h+=`<div class="week-day">
+    
+    // 🌟 이 부분에 onclick="openDayModal('${dk}')" 와 cursor:pointer 를 추가했습니다!
+    h+=`<div class="week-day" style="cursor:pointer; transition:transform 0.1s;" onclick="openDayModal('${dk}')" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
       <span class="week-day-label ${isToday?'today-label':''}">${label}</span>
-      <div class="week-bar-wrap" title="${total?pct+'% ('+done+'/'+total+')':'할 일 없음'}">
+      <div class="week-bar-wrap" title="클릭해서 ${label}요일 할 일 보기">
         ${total?`<div class="week-bar-fill" style="height:${barH}px;background:${bc}"></div>`:''}
       </div>
       <span class="week-day-pct" style="${isToday?'color:var(--accent)':''}">${total?pct+'%':'-'}</span>
