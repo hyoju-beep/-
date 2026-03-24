@@ -947,19 +947,47 @@ document.getElementById('evDate').value=getTK();
 
 // ── Day Modal ──
 
-// 🌟 모달창 전용 체크/해제 함수 추가!
+// 🌟 모달창 전용 상태 수정(체크/해제)
 window.toggleTodoModal = function(id, dk) {
   const t = todos.find(x => x.id === id);
   if(!t) return;
-  t.done = !t.done; // 체크 상태 반전
+  t.done = !t.done; 
   save();
   renderToday(); 
   if(typeof renderCalendar === 'function') renderCalendar();
   if(typeof updateProgress === 'function') updateProgress();
   if(typeof renderWeekStrip === 'function') renderWeekStrip();
-  openDayModal(dk); // 체크 후 모달창 화면 즉시 새로고침
+  openDayModal(dk); 
 };
 
+// 🌟 모달창 전용 이름(텍스트) 수정 함수
+window.editTodoTextFromModal = function(id, dk) {
+  const t = todos.find(x => x.id === id);
+  if(!t) return;
+  const newText = prompt("할 일 내용을 수정하세요:", t.text);
+  if(newText !== null && newText.trim() !== "") {
+    t.text = newText.trim();
+    save();
+    renderToday(); 
+    if(typeof renderCalendar === 'function') renderCalendar();
+    openDayModal(dk);
+  }
+};
+
+// 🌟 모달창 전용 항목 완전 삭제 함수 추가!
+window.deleteTodoFromModal = function(id, dk) {
+  if(confirm("이 항목을 정말 삭제할까?")) {
+    todos = todos.filter(t => t.id !== id);
+    save();
+    renderToday();
+    if(typeof renderCalendar === 'function') renderCalendar();
+    if(typeof updateProgress === 'function') updateProgress();
+    if(typeof renderWeekStrip === 'function') renderWeekStrip();
+    openDayModal(dk);
+  }
+};
+
+// ── Day Modal ──
 function openDayModal(dk){
   const dls=deadlines.filter(dl=>dl.date===dk);
   const evs=events.filter(ev=>ev.date===dk);
@@ -976,25 +1004,32 @@ function openDayModal(dk){
       <div style="background:var(--bg);border-radius:99px;height:4px;overflow:hidden"><div style="width:${pct}%;height:100%;border-radius:99px;background:${bc}"></div></div>
     </div>`;
     
+    const isPast = dk < getTK(); // 🌟 과거 날짜인지 당일/미래인지 판단
+    
     // 미완료 항목 리스트
     const pend=sortedTodos(dayTodos.filter(t=>!t.done));
     if(pend.length){
-      const isPast = dk < getTK(); // 🌟 오늘 이전의 과거 날짜인지 확인
-      const titleLabel = isPast ? '미완료 ❌' : '할 일'; // 🌟 과거면 이름 변경
+      const titleLabel = isPast ? '미완료 ❌' : '할 일'; 
       
       content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">${titleLabel} (${pend.length})</div>`;
-      content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start; ${isPast ? 'opacity:.6;' : ''}">
+      
+      content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start; ${isPast ? 'opacity:.8;' : ''}">
         <div style="display:flex;align-items:center;gap:8px;width:100%">
           
           <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:${isPast ? 'default' : 'pointer'};" ${isPast ? '' : `onclick="toggleTodoModal('${t.id}', '${dk}')"`}>
             ${isPast ? '❌' : ''}
           </button>
           
-          <span style="flex:1;font-size:12px; ${isPast ? 'color:var(--muted)' : ''}">${priLabel(t.priority||2)} ${esc(t.text)}</span>
+          <span style="flex:1;font-size:12px; cursor:pointer; ${isPast ? 'color:var(--muted)' : ''}" onclick="editTodoTextFromModal('${t.id}', '${dk}')" title="클릭해서 이름 수정">
+            ${priLabel(t.priority||2)} <span style="border-bottom:1px dashed var(--border); padding-bottom:1px;">${esc(t.text)}</span>
+          </span>
+          
           ${t.recurId?'<span style="font-size:10px;color:var(--muted)">🔁</span>':''}
           <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
           
           ${isPast && !t.recurId && !t.dismissed ? `<button class="postpone-btn" onclick="postponeFromModal('${t.id}','${dk}')">오늘로 →</button>`:''}
+          
+          <button onclick="deleteTodoFromModal('${t.id}', '${dk}')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;" title="항목 삭제">✕</button>
         </div>
         ${t.memo?`<div style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:26px">${esc(t.memo)}</div>`:''}
       </div>`).join('');
@@ -1005,9 +1040,17 @@ function openDayModal(dk){
     if(doneItems.length){
       content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin:10px 0 6px">완료 ✓ (${doneItems.length})</div>`;
       content+=doneItems.map(t=>`<div class="modal-ev-item" style="opacity:.45;margin-bottom:4px">
-        <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0;background:var(--c1);border-color:var(--c1); cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')">✓</button>
-        <span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--muted)">${esc(t.text)}</span>
-        <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
+        <div style="display:flex;align-items:center;gap:8px;width:100%">
+          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0;background:var(--c1);border-color:var(--c1); cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')">✓</button>
+          
+          <span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--muted); cursor:pointer;" onclick="editTodoTextFromModal('${t.id}', '${dk}')" title="클릭해서 이름 수정">
+            ${esc(t.text)}
+          </span>
+          
+          <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
+
+          <button onclick="deleteTodoFromModal('${t.id}', '${dk}')" style="background:transparent;border:none;color:inherit;cursor:pointer;font-size:14px;padding:0 4px;" title="항목 삭제">✕</button>
+        </div>
       </div>`).join('');
     }
   }
@@ -1027,7 +1070,8 @@ function openDayModal(dk){
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open');
-}
+                      }
+
   
 // ── 테마 ──
 const CUSTOM_VARS=[
