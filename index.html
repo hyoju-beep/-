@@ -931,6 +931,20 @@ document.getElementById('dlDate').value=getTK();
 document.getElementById('evDate').value=getTK();
 
 // ── Day Modal ──
+
+// 🌟 모달창 전용 체크/해제 함수 추가!
+window.toggleTodoModal = function(id, dk) {
+  const t = todos.find(x => x.id === id);
+  if(!t) return;
+  t.done = !t.done; // 체크 상태 반전
+  save();
+  renderToday(); 
+  if(typeof renderCalendar === 'function') renderCalendar();
+  if(typeof updateProgress === 'function') updateProgress();
+  if(typeof renderWeekStrip === 'function') renderWeekStrip();
+  openDayModal(dk); // 체크 후 모달창 화면 즉시 새로고침
+};
+
 function openDayModal(dk){
   const dls=deadlines.filter(dl=>dl.date===dk);
   const evs=events.filter(ev=>ev.date===dk);
@@ -938,6 +952,7 @@ function openDayModal(dk){
   const d=kd(dk);
   document.getElementById('modalDateTitle').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KO[d.getDay()]})`;
   let content='';
+  
   if(dayTodos.length>0){
     const doneCnt=dayTodos.filter(t=>t.done).length,total=dayTodos.length,pct=Math.round(doneCnt/total*100);
     const bc=pct===100?'#34d399':pct>=50?'var(--accent)':'#fb923c';
@@ -945,12 +960,14 @@ function openDayModal(dk){
       <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:11px;color:var(--muted)">📋 이행률</span><span style="font-size:11px;font-weight:700;color:${bc}">${pct}% (${doneCnt}/${total})</span></div>
       <div style="background:var(--bg);border-radius:99px;height:4px;overflow:hidden"><div style="width:${pct}%;height:100%;border-radius:99px;background:${bc}"></div></div>
     </div>`;
+    
+    // 미완료 항목 리스트
     const pend=sortedTodos(dayTodos.filter(t=>!t.done));
     if(pend.length){
       content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">할 일 (${pend.length})</div>`;
       content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start">
         <div style="display:flex;align-items:center;gap:8px;width:100%">
-          <div class="check-btn" data-cat="${t.cat}" style="flex-shrink:0"></div>
+          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')"></button>
           <span style="flex:1;font-size:12px">${priLabel(t.priority||2)} ${esc(t.text)}</span>
           ${t.recurId?'<span style="font-size:10px;color:var(--muted)">🔁</span>':''}
           <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
@@ -959,16 +976,19 @@ function openDayModal(dk){
         ${t.memo?`<div style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:26px">${esc(t.memo)}</div>`:''}
       </div>`).join('');
     }
+    
+    // 완료 항목 리스트
     const doneItems=sortedTodos(dayTodos.filter(t=>t.done));
     if(doneItems.length){
       content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin:10px 0 6px">완료 ✓ (${doneItems.length})</div>`;
       content+=doneItems.map(t=>`<div class="modal-ev-item" style="opacity:.45;margin-bottom:4px">
-        <div class="check-btn" data-cat="${t.cat}" style="flex-shrink:0;background:var(--c1);border-color:var(--c1)">✓</div>
+        <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0;background:var(--c1);border-color:var(--c1); cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')">✓</button>
         <span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--muted)">${esc(t.text)}</span>
         <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
       </div>`).join('');
     }
   }
+  
   if(evs.length){
     content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin:10px 0 6px">일정</div>`;
     content+=evs.map(e=>`<div class="modal-ev-item"><div class="ev-dot" data-cat="${e.cat}"></div><span class="modal-ev-text">${esc(e.title)}</span>${e.time?`<span style="font-size:10px;font-weight:700;color:var(--accent);background:rgba(255,255,255,.07);padding:2px 7px;border-radius:4px">${e.time}</span>`:''}<span class="cat-badge" data-cat="${e.cat}">${EMOJIS[e.cat]}</span></div>`).join('');
@@ -978,9 +998,11 @@ function openDayModal(dk){
     content+=dls.map(e=>`<div class="modal-ev-item"><span>📌</span><span class="modal-ev-text">${esc(e.title)}</span><span class="dday-badge ${ddC(getDday(e.date))}">${ddL(getDday(e.date))}</span></div>`).join('');
   }
   if(!evs.length&&!dls.length&&!dayTodos.length)content=`<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0">아무것도 없는 날이야 😊</div>`;
+  
   document.getElementById('modalEvents').innerHTML=content;
   document.getElementById('dayModal').classList.add('open');
 }
+
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ── 테마 ──
