@@ -452,8 +452,8 @@ const SK_TODOS='smt-todos-v4',SK_RECUR='smt-recur-v3',SK_DL='smt-dl-v3',SK_INJ='
 let todos=[],recurring=[],deadlines=[],events=[],injected=new Set();
 let activeFilter='all',calYear,calMonth,recurOpen=false,postponeOpen=true;
 
-const EMOJIS={school:'🏫',study:'📚',health:'🏃',daily:'🌿',job:'💼'};
-const LABELS={school:'학교',study:'공부',health:'운동',daily:'일상',job:'취준'};
+const EMOJIS={checklist:'✅' culture:'🎨',study:'📚',health:'🏃',daily:'🌿',job:'💼'};
+const LABELS={checklist:'체크리스트', culture:'문생', study:'공부',health:'운동',daily:'일상',job:'취준'};
 const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const DAYS_KO=['일','월','화','수','목','금','토'];
 const DAYS_FULL=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
@@ -917,8 +917,8 @@ const CUSTOM_VARS=[
   {key:'--bg',label:'배경'},{key:'--surface',label:'카드 배경'},{key:'--left-bg',label:'달력 패널'},
   {key:'--text',label:'텍스트'},{key:'--muted',label:'흐린 텍스트'},
   {key:'--accent',label:'강조색 (제목·버튼)'},{key:'--accent2',label:'강조색 2'},
-  {key:'--c1',label:'🏫 학교'},{key:'--c2',label:'📚 공부'},{key:'--c3',label:'🏃 운동'},
-  {key:'--c4',label:'🌿 일상'},{key:'--c5',label:'💼 취준'},
+  {key:'--c1',label:'✅ 체크리스트'},{key:'--c2',label:'📚 공부'},{key:'--c3',label:'🏃 운동'},
+  {key:'--c4',label:'🌿 일상'},{key:'--c5',label:'💼 취준'},{key:'--65',label:'🎨 문생'},
 ];
 let currentTheme='navy',customVals={};
 function getCurrentCSSVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
