@@ -554,7 +554,12 @@ function renderUpcomingStrip(){
 }
 
 // ── 미루기 ──
-function getPendingPast(){const tk=getTK();return todos.filter(t=>t.date<tk&&!t.done&&!t.recurId);}
+function getPendingPast(){
+  const tk=getTK();
+  // 🌟 t.dismissed 가 없는(숨김처리 안 된) 항목만 가져오도록 !t.dismissed 추가
+  return todos.filter(t=>t.date<tk&&!t.done&&!t.recurId&&!t.dismissed);
+}
+
 function renderPostponed(){
   const wrap=document.getElementById('postponeSection');
   const items=getPendingPast();
@@ -581,16 +586,22 @@ function togglePostpone(){postponeOpen=!postponeOpen;renderPostponed();}
 function postponeTodo(id){
   const t=todos.find(t=>t.id===id);if(!t)return;
   todos.push({ ...t, id: uid(), date: getTK(), done: false }); // 기존 t 변경 없이 새 항목 추가
+  t.dismissed = true; // 🌟 복사 후 원본은 숨김!
   save();renderToday();
 }
 
-function dismissPostpone(id){todos=todos.filter(t=>t.id!==id);save();renderToday();}
+function dismissPostpone(id){
+  const t=todos.find(t=>t.id===id);if(!t)return;
+  t.dismissed = true; // 🌟 삭제(filter)하지 않고 숨김 처리만! (이행률 보존)
+  save();renderToday();
+}
 
 // 모든 항목 오늘로 복사해오기
 function postponeAll(){
   const tk=getTK();
   getPendingPast().forEach(t=>{
     todos.push({ ...t, id: uid(), date: tk, done: false });
+    t.dismissed = true; // 🌟 모두 복사 후 숨김
   });
   save();renderToday();
 }
@@ -599,7 +610,9 @@ function postponeAll(){
 function postponeFromModal(id,dk){
   const t=todos.find(t=>t.id===id);if(!t)return;
   todos.push({ ...t, id: uid(), date: getTK(), done: false });
-  save();renderToday();openDayModal(dk);
+  t.dismissed = true; // 🌟 복사 후 숨김
+  save();renderToday();
+  if(typeof openDayModal==='function') openDayModal(dk);
 }
 
 // ── TODO render ──
@@ -966,14 +979,22 @@ function openDayModal(dk){
     // 미완료 항목 리스트
     const pend=sortedTodos(dayTodos.filter(t=>!t.done));
     if(pend.length){
-      content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">할 일 (${pend.length})</div>`;
-      content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start">
+      const isPast = dk < getTK(); // 🌟 오늘 이전의 과거 날짜인지 확인
+      const titleLabel = isPast ? '미완료 ❌' : '할 일'; // 🌟 과거면 이름 변경
+      
+      content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">${titleLabel} (${pend.length})</div>`;
+      content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start; ${isPast ? 'opacity:.6;' : ''}">
         <div style="display:flex;align-items:center;gap:8px;width:100%">
-          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')"></button>
-          <span style="flex:1;font-size:12px">${priLabel(t.priority||2)} ${esc(t.text)}</span>
+          
+          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:${isPast ? 'default' : 'pointer'};" ${isPast ? '' : `onclick="toggleTodoModal('${t.id}', '${dk}')"`}>
+            ${isPast ? '❌' : ''}
+          </button>
+          
+          <span style="flex:1;font-size:12px; ${isPast ? 'color:var(--muted)' : ''}">${priLabel(t.priority||2)} ${esc(t.text)}</span>
           ${t.recurId?'<span style="font-size:10px;color:var(--muted)">🔁</span>':''}
           <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
-          ${t.date<getTK()&&!t.recurId?`<button class="postpone-btn" onclick="postponeFromModal('${t.id}','${dk}')">오늘로 →</button>`:''}
+          
+          ${isPast && !t.recurId && !t.dismissed ? `<button class="postpone-btn" onclick="postponeFromModal('${t.id}','${dk}')">오늘로 →</button>`:''}
         </div>
         ${t.memo?`<div style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:26px">${esc(t.memo)}</div>`:''}
       </div>`).join('');
@@ -1006,7 +1027,7 @@ function openDayModal(dk){
 }
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-
+  
 // ── 테마 ──
 const CUSTOM_VARS=[
   {key:'--bg',label:'배경'},{key:'--surface',label:'카드 배경'},{key:'--left-bg',label:'달력 패널'},
