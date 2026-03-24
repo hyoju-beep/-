@@ -574,10 +574,31 @@ function renderPostponed(){
   wrap.innerHTML=h;
 }
 function togglePostpone(){postponeOpen=!postponeOpen;renderPostponed();}
-function postponeTodo(id){const t=todos.find(t=>t.id===id);if(!t)return;t.date=getTK();save();renderToday();}
+
+// 개별 항목 오늘로 복사해오기
+function postponeTodo(id){
+  const t=todos.find(t=>t.id===id);if(!t)return;
+  todos.push({ ...t, id: uid(), date: getTK(), done: false }); // 기존 t 변경 없이 새 항목 추가
+  save();renderToday();
+}
+
 function dismissPostpone(id){todos=todos.filter(t=>t.id!==id);save();renderToday();}
-function postponeAll(){const tk=getTK();getPendingPast().forEach(t=>{t.date=tk;});save();renderToday();}
-function postponeFromModal(id,dk){const t=todos.find(t=>t.id===id);if(!t)return;t.date=getTK();save();renderToday();openDayModal(dk);}
+
+// 모든 항목 오늘로 복사해오기
+function postponeAll(){
+  const tk=getTK();
+  getPendingPast().forEach(t=>{
+    todos.push({ ...t, id: uid(), date: tk, done: false });
+  });
+  save();renderToday();
+}
+
+// 모달창에서 오늘로 복사해오기
+function postponeFromModal(id,dk){
+  const t=todos.find(t=>t.id===id);if(!t)return;
+  todos.push({ ...t, id: uid(), date: getTK(), done: false });
+  save();renderToday();openDayModal(dk);
+}
 
 // ── TODO render ──
 function sortedTodos(list){
