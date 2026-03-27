@@ -987,6 +987,38 @@ window.deleteTodoFromModal = function(id, dk) {
   }
 };
 
+// 🌟 모달창 전용 새로운 할 일 추가 함수
+window.addTodoFromModal = function(dk) {
+  const inp = document.getElementById('modalTodoInput');
+  const text = inp.value.trim();
+  if(!text) { inp.focus(); return; } // 빈칸이면 무시하고 포커스만
+
+  const maxOrder = todos.reduce((m, t) => Math.max(m, t.order || 0), 0);
+  
+  // 메인 화면에 선택되어 있는 카테고리/우선순위를 가져옵니다 (없으면 기본값)
+  const catEl = document.getElementById('todoCat');
+  const priEl = document.getElementById('todoPri');
+  
+  todos.push({
+    id: typeof uid === 'function' ? uid() : 't_' + Date.now().toString(),
+    text: text,
+    cat: catEl ? catEl.value : 'checklist',
+    done: false,
+    date: dk,
+    priority: priEl ? Number(priEl.value) : 2,
+    memo: '',
+    order: maxOrder + 1
+  });
+
+  save();
+  renderToday();
+  if(typeof renderCalendar === 'function') renderCalendar();
+  if(typeof updateProgress === 'function') updateProgress();
+  if(typeof renderWeekStrip === 'function') renderWeekStrip();
+  
+  openDayModal(dk); // 항목 추가 후 모달창 즉시 새로고침
+};
+
 // ── Day Modal ──
 function openDayModal(dk){
   const dls=deadlines.filter(dl=>dl.date===dk);
@@ -1004,20 +1036,17 @@ function openDayModal(dk){
       <div style="background:var(--bg);border-radius:99px;height:4px;overflow:hidden"><div style="width:${pct}%;height:100%;border-radius:99px;background:${bc}"></div></div>
     </div>`;
     
-    const isPast = dk < getTK(); // 🌟 과거 날짜인지 판단
+    const isPast = dk < getTK(); 
     
     // 미완료 항목 리스트
     const pend=sortedTodos(dayTodos.filter(t=>!t.done));
     if(pend.length){
       const titleLabel = isPast ? '미완료 ❌' : '할 일'; 
-      
       content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">${titleLabel} (${pend.length})</div>`;
       
       content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start; ${isPast ? 'opacity:.8;' : ''}">
         <div style="display:flex;align-items:center;gap:8px;width:100%">
-          
-          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')">
-          </button>
+          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')"></button>
           
           <span style="flex:1;font-size:12px; cursor:pointer; ${isPast ? 'color:var(--muted)' : ''}" onclick="editTodoTextFromModal('${t.id}', '${dk}')" title="클릭해서 이름 수정">
             ${priLabel(t.priority||2)} <span style="border-bottom:1px dashed var(--border); padding-bottom:1px;">${esc(t.text)}</span>
@@ -1047,7 +1076,6 @@ function openDayModal(dk){
           </span>
           
           <span class="cat-badge" data-cat="${t.cat}">${EMOJIS[t.cat]}</span>
-
           <button onclick="deleteTodoFromModal('${t.id}', '${dk}')" style="background:transparent;border:none;color:inherit;cursor:pointer;font-size:14px;padding:0 4px;" title="항목 삭제">✕</button>
         </div>
       </div>`).join('');
@@ -1062,16 +1090,35 @@ function openDayModal(dk){
     content+=`<div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin:10px 0 6px">마감일</div>`;
     content+=dls.map(e=>`<div class="modal-ev-item"><span>📌</span><span class="modal-ev-text">${esc(e.title)}</span><span class="dday-badge ${ddC(getDday(e.date))}">${ddL(getDday(e.date))}</span></div>`).join('');
   }
-  if(!evs.length&&!dls.length&&!dayTodos.length)content=`<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0">아무것도 없는 날이야 😊</div>`;
+  
+  // 비어있을 때 뜨는 문구 
+  if(!evs.length&&!dls.length&&!dayTodos.length) {
+    content = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0">아무것도 없는 날이야 😊</div>`;
+  }
+  
+  // 🌟 모달창 맨 아래쪽에 할 일 추가 입력창 및 버튼 삽입!
+  content += `
+    <div style="margin-top:16px; display:flex; gap:6px; border-top:1px dashed var(--border); padding-top:16px;">
+      <input type="text" id="modalTodoInput" placeholder="이날의 새로운 할 일 추가..." 
+             style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; outline:none;" 
+             onkeydown="if(event.key==='Enter') addTodoFromModal('${dk}')">
+      <button onclick="addTodoFromModal('${dk}')" 
+              style="background:var(--accent); color:var(--bg); border:none; border-radius:6px; padding:0 16px; font-weight:bold; cursor:pointer; font-size:16px;">
+        +
+      </button>
+    </div>
+  `;
   
   document.getElementById('modalEvents').innerHTML=content;
   document.getElementById('dayModal').classList.add('open');
+  
+  // 창이 열리면 입력창에 포커스가 가게 하려면 아래 주석을 해제하세요. (모바일에서는 키보드가 바로 올라올 수 있습니다)
+  // setTimeout(() => document.getElementById('modalTodoInput').focus(), 100);
 }
 
 function closeModal(id){
   document.getElementById(id).classList.remove('open');
 }
-  
 // ── 테마 ──
 const CUSTOM_VARS=[
   {key:'--bg',label:'배경'},{key:'--surface',label:'카드 배경'},{key:'--left-bg',label:'달력 패널'},
