@@ -1004,7 +1004,7 @@ function openDayModal(dk){
       <div style="background:var(--bg);border-radius:99px;height:4px;overflow:hidden"><div style="width:${pct}%;height:100%;border-radius:99px;background:${bc}"></div></div>
     </div>`;
     
-    const isPast = dk < getTK(); // 🌟 과거 날짜인지 당일/미래인지 판단
+    const isPast = dk < getTK(); // 🌟 과거 날짜인지 판단
     
     // 미완료 항목 리스트
     const pend=sortedTodos(dayTodos.filter(t=>!t.done));
@@ -1016,8 +1016,7 @@ function openDayModal(dk){
       content+=pend.map(t=>`<div class="modal-ev-item" style="margin-bottom:4px;flex-direction:column;align-items:flex-start; ${isPast ? 'opacity:.8;' : ''}">
         <div style="display:flex;align-items:center;gap:8px;width:100%">
           
-          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:${isPast ? 'default' : 'pointer'};" ${isPast ? '' : `onclick="toggleTodoModal('${t.id}', '${dk}')"`}>
-            ${isPast ? '❌' : ''}
+          <button class="check-btn" data-cat="${t.cat}" style="flex-shrink:0; cursor:pointer;" onclick="toggleTodoModal('${t.id}', '${dk}')">
           </button>
           
           <span style="flex:1;font-size:12px; cursor:pointer; ${isPast ? 'color:var(--muted)' : ''}" onclick="editTodoTextFromModal('${t.id}', '${dk}')" title="클릭해서 이름 수정">
@@ -1069,9 +1068,9 @@ function openDayModal(dk){
   document.getElementById('dayModal').classList.add('open');
 }
 
-function closeModal(id){document.getElementById(id).classList.remove('open');
-                      }
-
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+}
   
 // ── 테마 ──
 const CUSTOM_VARS=[
